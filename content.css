@@ -1,7 +1,5 @@
 .qr-container {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
   background: white;
   padding: 15px;
   border-radius: 8px;
@@ -11,11 +9,14 @@
   flex-direction: column;
   align-items: center;
   transition: all 0.3s ease;
+  cursor: move;
+  user-select: none;
+  touch-action: none;
 }
 
 .qr-container.collapsed {
   padding: 8px;
-  cursor: pointer;
+  cursor: move;
 }
 
 .qr-container.collapsed .site-info,

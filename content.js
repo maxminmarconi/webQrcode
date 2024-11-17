@@ -6,6 +6,113 @@ function createQRCode() {
   // 创建容器
   const container = document.createElement('div');
   container.className = 'qr-container collapsed';
+  
+  // 设置初始位置
+  container.style.right = '20px';
+  container.style.bottom = '20px';
+
+  // 拖动相关变量
+  let isDragging = false;
+  let startX, startY;
+  let startRight, startBottom;
+  let longPressTimer;
+  let isLongPress = false;
+
+  // 处理鼠标按下
+  container.addEventListener('mousedown', (e) => {
+    if (e.target === container || e.target.classList.contains('toggle-icon')) {
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      // 获取初始位置
+      const rect = container.getBoundingClientRect();
+      startRight = window.innerWidth - rect.right;
+      startBottom = window.innerHeight - rect.bottom;
+
+      // 设置长按定时器
+      longPressTimer = setTimeout(() => {
+        isLongPress = true;
+        isDragging = true;
+        container.style.transition = 'none';
+        container.style.cursor = 'grabbing';
+      }, 200);
+    }
+  });
+
+  // 处理鼠标移动
+  const handleMouseMove = (e) => {
+    if (!isDragging) {
+      // 检查是否移动超过阈值
+      if (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5) {
+        clearTimeout(longPressTimer);
+        isDragging = true;
+        isLongPress = true;
+        container.style.transition = 'none';
+        container.style.cursor = 'grabbing';
+      }
+      return;
+    }
+
+    e.preventDefault();
+    
+    // 计算新位置
+    const deltaX = e.clientX - startX;
+    const deltaY = e.clientY - startY;
+    
+    const newRight = Math.max(0, startRight - deltaX);
+    const newBottom = Math.max(0, startBottom - deltaY);
+    
+    // 确保不超出屏幕边界
+    const rect = container.getBoundingClientRect();
+    const maxRight = window.innerWidth - rect.width;
+    const maxBottom = window.innerHeight - rect.height;
+    
+    container.style.right = `${Math.min(newRight, maxRight)}px`;
+    container.style.bottom = `${Math.min(newBottom, maxBottom)}px`;
+  };
+
+  // 处理鼠标松开
+  const handleMouseUp = () => {
+    clearTimeout(longPressTimer);
+    const wasDragging = isDragging;
+    isDragging = false;
+    
+    // 移除事件监听器
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    
+    // 重置状态
+    setTimeout(() => {
+      container.style.cursor = 'move';
+      container.style.transition = 'all 0.3s ease';
+      isLongPress = false;
+    }, 0);
+
+    // 如果没有拖动，则触发点击事件
+    if (!wasDragging && !isLongPress) {
+      container.classList.toggle('collapsed');
+    }
+  };
+
+  // 添加鼠标按下时的事件监听器
+  container.addEventListener('mousedown', (e) => {
+    if (e.target === container || e.target.classList.contains('toggle-icon')) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+  });
+
+  // 防止文本选择
+  container.addEventListener('selectstart', (e) => {
+    e.preventDefault();
+  });
+
+  // 处理点击页面其他位置折叠
+  document.addEventListener('click', (e) => {
+    if (!container.contains(e.target) && !container.classList.contains('collapsed')) {
+      container.classList.add('collapsed');
+    }
+  });
 
   // 创建切换图标
   const toggleIcon = document.createElement('img');
@@ -75,19 +182,6 @@ function createQRCode() {
     correctLevel: QRCode.CorrectLevel.H
   });
 
-  // 添加点击事件处理
-  container.addEventListener('click', (e) => {
-    e.stopPropagation(); // 阻止事件冒泡
-    container.classList.toggle('collapsed');
-  });
-
-  // 添加点击页面其他位置折叠的处理
-  document.addEventListener('click', () => {
-    if (!container.classList.contains('collapsed')) {
-      container.classList.add('collapsed');
-    }
-  });
-  
   console.log('QR Code Extension: QR code container added to page');
 }
 
